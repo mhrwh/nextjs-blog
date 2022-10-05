@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+   db:
+     image: mysql:5.7
+     platform: linux/amd64
+     volumes:
+       - db_data:/var/lib/mysql
+     restart: always
+     environment:
+       MYSQL_ROOT_PASSWORD: somewordpress
+       MYSQL_DATABASE: wordpress
+       MYSQL_USER: wordpress
+       MYSQL_PASSWORD: wordpress
+     networks:
+      - wp_next
+
+   wordpress:
+     build:
+      context: ./.docker/wp
+      dockerfile: Dockerfile
+     container_name: wordpress
+     depends_on:
+       - db
+     ports:
+       - "8080:80"
+     restart: always
+     environment:
+       WORDPRESS_DB_HOST: db:3306
+       WORDPRESS_DB_USER: wordpress
+       WORDPRESS_DB_PASSWORD: wordpress
+     volumes:
+       - ./wordpress:/var/www/html
+     networks:
+      - wp_next
+
+   front:
+     build:
+      context: ./.docker/front
+      dockerfile: Dockerfile
+     volumes:
+       - ./:/usr/src/app
+     stdin_open: true
+     tty: true
+     ports:
+       - "3030:3000"
+     networks:
+      - wp_next
+
+volumes:
+    db_data:
+
+networks:
+  wp_next:
+    driver: bridge
